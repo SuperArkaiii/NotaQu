@@ -41,7 +41,7 @@ class NotaGabunganExport
         $this->insertRowsForItems($sheet, $allItems->count());
 
         // Header - sesuai dengan struktur yang Anda berikan
-        $sheet->setCellValue("O6", $firstNota->kode_faktur . '/INV/RPN/05');
+        $sheet->setCellValue("O6", $firstNota->kode_faktur . '/2025/INV/RPN/05');
         $sheet->setCellValue("O7", $firstNota->tanggal->format('d F Y'));
         $sheet->setCellValue("E20", $firstNota->dataPelanggan->nama ?? '-');
         $sheet->setCellValue("E22", $firstNota->dataPelanggan->alamat ?? '-');
@@ -160,9 +160,14 @@ class NotaGabunganExport
         $this->addItemTableStyling($sheet, $startRow, $startRow + $totalItems - 1);
 
         $writer = new Xlsx($spreadsheet);
+        $kode_faktur = str_replace(['/', '\\', ':'], '-', $firstNota->kode_faktur);
+        $filename = "Invoice{$kode_faktur}.xlsx";
+        
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
-        }, "NotaPesanan{$firstNota->kode_faktur}.xlsx");
+        }, $filename);
+        
+        
     }
 
     protected function addCalculationStyling($sheet, $startRow, $endRow)

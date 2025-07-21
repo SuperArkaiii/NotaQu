@@ -63,7 +63,7 @@ class NotaGabungan2Export
 
         // Header untuk Tabel 2 (duplikasi dari tabel 1) - DISESUAIKAN DENGAN PERGESERAN
         $headerRow2Base = 39 + $additionalRows; // Baris header tabel 2 setelah pergeseran
-        $sheet->setCellValue("I{$headerRow2Base}", $firstNota->kode_faktur . '/DO/RPN/05'); // Faktur
+        $sheet->setCellValue("I{$headerRow2Base}", $firstNota->kode_faktur . '/2025/DO/RPN/05'); // Faktur
         $sheet->setCellValue("I" . ($headerRow2Base + 1), $firstNota->tanggal->format('d F Y')); // Tanggal Kirim
         $sheet->setCellValue("I" . ($headerRow2Base + 2), $firstNota->kode_faktur . '/PO/05'); // Nomor PO
         
@@ -85,9 +85,12 @@ class NotaGabungan2Export
         $this->addItemTableStyling($sheet, $startRow2, $endRow2);
 
         $writer = new Xlsx($spreadsheet);
+        $kode_faktur = str_replace(['/', '\\', ':'], '-', $firstNota->kode_faktur);
+        $filename = "SuratJalan{$kode_faktur}.xlsx";
+        
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
-        }, "SuratJalan{$firstNota->kode_faktur}.xlsx");
+        }, $filename);
     }
 
     protected function fillItemData($sheet, $allItems, $startRow)

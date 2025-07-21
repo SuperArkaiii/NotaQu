@@ -21,7 +21,7 @@ class OngkosPackingResource extends Resource
     protected static ?string $model = OngkosPacking::class;
 
 protected static ?string $navigationIcon = 'heroicon-o-cube'; // atau ganti sesuai kebutuhan
-    protected static ?string $navigationLabel = 'Harga Koli';
+    protected static ?string $navigationLabel = 'Harga Packing';
 
     public static function form(Form $form): Form
     {
