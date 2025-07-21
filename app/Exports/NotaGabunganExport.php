@@ -7,6 +7,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class NotaGabunganExport
 {
@@ -162,7 +163,7 @@ class NotaGabunganExport
         $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
-        }, "NotaPesanan{$firstNota->kode_faktur}.xlsx");
+        }, "NotaPesanan.xlsx");
     }
 
     protected function addCalculationStyling($sheet, $startRow, $endRow)

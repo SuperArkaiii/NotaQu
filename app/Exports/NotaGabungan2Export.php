@@ -86,8 +86,10 @@ class NotaGabungan2Export
 
         $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(function () use ($writer) {
+            ob_clean();
+            flush();
             $writer->save('php://output');
-        }, "SuratJalan{$firstNota->kode_faktur}.xlsx");
+        }, "SuratJalan.xlsx");
     }
 
     protected function fillItemData($sheet, $allItems, $startRow)
