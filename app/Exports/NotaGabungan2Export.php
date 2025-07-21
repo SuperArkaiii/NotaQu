@@ -89,6 +89,8 @@ class NotaGabungan2Export
         $filename = "SuratJalan{$kode_faktur}.xlsx";
         
         return response()->streamDownload(function () use ($writer) {
+            ob_clean();
+            flush();
             $writer->save('php://output');
         }, $filename);
     }
