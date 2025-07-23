@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Model;
 
 
 class ProductResource extends Resource
@@ -86,5 +87,26 @@ protected static ?string $navigationIcon = 'heroicon-o-cube'; // atau ganti sesu
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }
+
+    public static function canViewAny(): bool
+    {   
+        return auth()->user()->can('view_any_product');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create_product');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()->can('update_product');
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()->can('delete_product');
+    }
+
 
 }

@@ -14,6 +14,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Database\Eloquent\Model;
+
 
 class DataPelangganResource extends Resource
 {
@@ -72,4 +74,26 @@ class DataPelangganResource extends Resource
             'edit' => Pages\EditDataPelanggan::route('/{record}/edit'),
         ];
     }
+
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_data::pelanggan');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create_data::pelanggan');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()->can('update_data::pelanggan');
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()->can('delete_data::pelanggan');
+    }
+
 }
