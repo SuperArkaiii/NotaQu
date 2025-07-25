@@ -32,7 +32,7 @@ protected static ?string $navigationIcon = 'heroicon-o-cube'; // atau ganti sesu
             TextInput::make('jumlah_koli')
                 ->label('Jumlah Koli')
                 ->numeric()
-                ->minValue(1) // Minimal 1 koli
+                ->minValue(0) // Minimal 0 koli
                 ->required()
                 ->reactive()
                 ->afterStateUpdated(fn ($state, callable $set) =>

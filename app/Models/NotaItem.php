@@ -15,6 +15,9 @@ class NotaItem extends Model
         'quantity',
         'harga',
         'diskon',
+        'satuan',
+        'keterangan_produk',
+        'pajak',
         'jumlah',
     ];
 

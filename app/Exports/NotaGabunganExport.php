@@ -103,7 +103,7 @@ class NotaGabunganExport
         $packingRow = $subtotalRow + 3;
         $kirimRow = $subtotalRow + 4;
         $totalRow1 = $subtotalRow + 5;
-        $totalRow2 = $subtotalRow + 6;
+        $totalRow2 = $subtotalRow + 6;  
         
         // Posisi terbilang juga disesuaikan
         $baseTerbilangRow = 58; // Posisi dasar terbilang (template asli)
@@ -112,14 +112,14 @@ class NotaGabunganExport
         // Hitung total sesuai dengan struktur yang Anda berikan
         $biaya_packing = $totalKoli * 100000; // Biaya packing = jumlah barang × 100,000
         $biaya_kirim = $firstNota->biaya_kirim ?? 0;
-        $dpp_nilai_lain = $subtotal * 11 / 12; // DPP Nilai Lain = Subtotal × 11/12
-        $ppn = $dpp_nilai_lain * 0.12; // PPN 12% = 12% × DPP Nilai Lain
+        $dpp = $subtotal * 11 / 12; // DPP Nilai Lain = Subtotal × 11/12
+        $ppn = $dpp * 0.12; // PPN 12% = 12% × DPP Nilai Lain
         $total = $subtotal + $ppn + $biaya_packing + $biaya_kirim;
 
         // Set nilai dan formula sesuai struktur
         $sheet->setCellValue("O{$subtotalRow}", $subtotal); // Subtotal
         $sheet->setCellValue("O{$ppnRow}", $ppn); // PPN 12%
-        $sheet->setCellValue("O{$dppRow}", $dpp_nilai_lain); // DPP Nilai Lain
+        $sheet->setCellValue("O{$dppRow}", $dpp); // DPP Nilai Lain
         $sheet->setCellValue("O{$packingRow}", $biaya_packing); // Biaya Packing
         $sheet->setCellValue("O{$kirimRow}", $biaya_kirim); // Biaya Kirim
         $sheet->setCellValue("O{$totalRow1}", $total); // TOTAL
