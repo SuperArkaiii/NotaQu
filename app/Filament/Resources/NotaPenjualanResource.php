@@ -339,11 +339,6 @@ class NotaPenjualanResource extends Resource
                 ->body("Stok tersedia hanya {$product->stok}")
                 ->danger()
                 ->send();
-            \Filament\Notifications\Notification::make()
-                ->title('Debug')
-                ->body("Packing: {$biayaPacking}")
-                ->success()
-                ->send();
         }
 
         self::handleItemUpdate($set, $get);
@@ -355,7 +350,12 @@ class NotaPenjualanResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode_faktur')
-                    ->label('Kode Faktur'),
+                    ->label('Kode Faktur')
+                    ->searchable(),
+                
+                Tables\Columns\TextColumn::make('nomor_po')
+                    ->label('Kode PO')
+                    ->searchable(),    
 
                 Tables\Columns\TextColumn::make('dataPelanggan.nama')
                     ->label('Nama Perusahaan')
