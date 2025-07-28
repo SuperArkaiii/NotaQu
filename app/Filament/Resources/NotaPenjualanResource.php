@@ -383,7 +383,7 @@ class NotaPenjualanResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
                 
                 BulkAction::make('exportGabungan')
-                    ->label('Surat Barang')
+                    ->label('Surat Invoice')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->requiresConfirmation()
                     ->deselectRecordsAfterCompletion()
@@ -392,7 +392,7 @@ class NotaPenjualanResource extends Resource
                     ),
 
                 BulkAction::make('exportAntar')
-                    ->label('Surat Kirim')
+                    ->label('Surat Jalan')
                     ->icon('heroicon-o-document-chart-bar')
                     ->requiresConfirmation()
                     ->deselectRecordsAfterCompletion()

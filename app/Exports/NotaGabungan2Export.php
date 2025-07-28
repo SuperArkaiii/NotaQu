@@ -7,6 +7,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Carbon\Carbon;
 
 class NotaGabungan2Export
 {
@@ -47,10 +48,13 @@ class NotaGabungan2Export
         $this->insertRowsForItems($sheet, $allItems->count(), $startRow1, 23); // Tabel pertama
         $this->insertRowsForItems($sheet, $allItems->count(), $startRow2, 55 + $additionalRows); // Tabel kedua (disesuaikan)
 
+        // Format tanggal kirim dengan pengecekan tipe data
+        $tanggalKirim = $this->formatTanggalKirim($firstNota->tanggal_kirim);
+
         // Header - sesuai dengan struktur Template Surat Jalan
         // Blok I sampai K (Tabel 1)
         $sheet->setCellValue("I7", $firstNota->kode_faktur . '/DO/RPN/05'); // Faktur
-        $sheet->setCellValue("I8", $firstNota->tanggal->format('d F Y')); // Tanggal Kirim
+        $sheet->setCellValue("I8", $tanggalKirim); // Tanggal Kirim
         $sheet->setCellValue("I9", $firstNota->kode_faktur . '/PO/05'); // Nomor PO
         
         // Blok B sampai E (Tabel 1)
@@ -64,7 +68,7 @@ class NotaGabungan2Export
         // Header untuk Tabel 2 (duplikasi dari tabel 1) - DISESUAIKAN DENGAN PERGESERAN
         $headerRow2Base = 39 + $additionalRows; // Baris header tabel 2 setelah pergeseran
         $sheet->setCellValue("I{$headerRow2Base}", $firstNota->kode_faktur . '/2025/DO/RPN/05'); // Faktur
-        $sheet->setCellValue("I" . ($headerRow2Base + 1), $firstNota->tanggal->format('d F Y')); // Tanggal Kirim
+        $sheet->setCellValue("I" . ($headerRow2Base + 1), $tanggalKirim); // Tanggal Kirim
         $sheet->setCellValue("I" . ($headerRow2Base + 2), $firstNota->kode_faktur . '/PO/05'); // Nomor PO
         
         $sheet->setCellValue("B{$headerRow2Base}", $firstNota->dataPelanggan->nama ?? '-'); // Nama
@@ -95,6 +99,29 @@ class NotaGabungan2Export
         }, $filename);
     }
 
+    /**
+     * Format tanggal kirim dengan pengecekan tipe data
+     */
+    protected function formatTanggalKirim($tanggalKirim)
+    {
+        if (empty($tanggalKirim)) {
+            return '-';
+        }
+
+        // Jika sudah berupa Carbon/DateTime object
+        if ($tanggalKirim instanceof \Carbon\Carbon || $tanggalKirim instanceof \DateTime) {
+            return $tanggalKirim->format('d F Y');
+        }
+
+        // Jika berupa string, coba parse menggunakan Carbon
+        try {
+            return Carbon::parse($tanggalKirim)->format('d F Y');
+        } catch (\Exception $e) {
+            // Jika gagal parse, return string asli atau default
+            return is_string($tanggalKirim) ? $tanggalKirim : '-';
+        }
+    }
+
     protected function fillItemData($sheet, $allItems, $startRow)
     {
         $row = $startRow;
@@ -103,11 +130,19 @@ class NotaGabungan2Export
         foreach ($allItems as $item) { 
             $sheet->setCellValue("B{$row}", $no++); // NO. (kolom B)
             $sheet->setCellValue("C{$row}", $item->quantity); // Jumlah barang (kolom C)
-            $sheet->setCellValue("D{$row}", "brng"); // Satuan "brng" (kolom D)
+            
+            // Menggunakan satuan dari database, fallback ke "brng" jika kosong
+            $satuan = !empty($item->satuan) ? $item->satuan : 'brng';
+            $sheet->setCellValue("D{$row}", $satuan); // Satuan dari database (kolom D)
             
             // Nama barang (kolom E sampai F diblok)
             $sheet->setCellValue("E{$row}", $item->product->nama_produk ?? '-'); // Nama barang
             $sheet->mergeCells("E{$row}:F{$row}"); // Merge E-F untuk nama barang
+            
+            // Tambahkan keterangan_produk di kolom G sampai K (dimerge)
+            $keterangan = !empty($item->keterangan_produk) ? $item->keterangan_produk : '';
+            $sheet->setCellValue("G{$row}", $keterangan); // Keterangan produk
+            $sheet->mergeCells("G{$row}:K{$row}"); // Merge G-K untuk keterangan produk
             
             $row++;
         }
@@ -205,18 +240,25 @@ class NotaGabungan2Export
             ],
         ];
 
-        // Style untuk border bold pada baris terakhir (bawah)
-        $lastRowBorderStyle = [
+        // Apply styling untuk baris pertama (nomor 1) - border bold atas dan kiri untuk B-F, khusus untuk G-K
+        $sheet->getStyle("B{$startRow}:F{$startRow}")->applyFromArray($firstRowBorderStyle);
+        $sheet->getStyle("G{$startRow}:K{$startRow}")->applyFromArray([
             'borders' => [
+                'left' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                ],
+                'top' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                ],
                 'bottom' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                ],
+                'right' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
                     'color' => ['rgb' => '000000'],
                 ],
             ],
-        ];
-
-        // Apply styling untuk baris pertama (nomor 1) - border bold atas dan kiri
-        $sheet->getStyle("B{$startRow}:F{$startRow}")->applyFromArray($firstRowBorderStyle);
+        ]);
 
         // Apply styling untuk baris ke-2 dst jika ada
         if ($endRow > $startRow) {
@@ -228,116 +270,100 @@ class NotaGabungan2Export
             
             // Border normal untuk kolom nama barang (E-F) pada baris ke-2 dst
             $sheet->getStyle("E" . ($startRow + 1) . ":F{$endRow}")->applyFromArray($namaBarangBorderStyle);
+            
+            // Border untuk kolom keterangan (G-K) pada baris ke-2 dst
+            $sheet->getStyle("G{$startRow}:K{$endRow}")->applyFromArray([
+                'borders' => [
+                    'top' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                    ],
+                    'bottom' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                    ],
+                    'left' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                    ],
+                    'right' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    ],
+                ],
+            ]);
+        }
+
+        // Border bawah bold pada baris ke-9 (baris terakhir template asli)
+        $ninthRow = $startRow + 8; // Baris ke-9 (baris 22 jika startRow = 14)
+        
+        // Pastikan baris ke-9 ada dalam range data
+        if ($ninthRow <= $endRow) {
+            if ($totalItems <= 9) {
+                // Jika 9 item atau kurang, apply border bawah bold untuk kolom B-F pada baris ke-9
+                $sheet->getStyle("B{$ninthRow}:F{$ninthRow}")->applyFromArray([
+                    'borders' => [
+                        'bottom' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+            } else {
+                // Jika lebih dari 9 item, hapus border bawah di baris ke-9 untuk kolom B-F
+                $sheet->getStyle("B{$ninthRow}:F{$ninthRow}")->applyFromArray([
+                    'borders' => [
+                        'bottom' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
+                    ],
+                ]);
+                
+                // PENTING: Hapus juga border bawah untuk kolom keterangan (G-K) di baris ke-9
+                $sheet->getStyle("G{$ninthRow}:K{$ninthRow}")->applyFromArray([
+                    'borders' => [
+                        'bottom' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
+                        'top' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
+                        'left' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
+                        'right' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+            }
         }
 
         // Handle kolom keterangan (G-K) berdasarkan jumlah item
-        if ($totalItems <= 9) {
-            // Jika 9 item atau kurang, hapus border bawah untuk kolom data barang
-            $sheet->getStyle("B{$endRow}:F{$endRow}")->applyFromArray([
+        if ($totalItems < 9) {
+            // Jika kurang dari 9 item, hapus border bawah untuk kolom keterangan pada baris terakhir
+            $sheet->getStyle("G{$endRow}:K{$endRow}")->applyFromArray([
                 'borders' => [
                     'bottom' => [
                         'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
                     ],
                 ],
             ]);
-        } else {
-            // Jika lebih dari 9 item:
-            $ninthRow = $startRow + 8; // Baris ke-9 (baris 22 jika startRow = 14)
-            
-            // PERBAIKAN: Untuk baris ke-9, hapus border bawah untuk semua kolom data barang
-            $sheet->getStyle("B{$ninthRow}:F{$ninthRow}")->applyFromArray([
+        } elseif ($totalItems == 9) {
+            // Jika tepat 9 item, beri border bawah tebal untuk kolom keterangan pada baris terakhir
+            $sheet->getStyle("G{$endRow}:K{$endRow}")->applyFromArray([
                 'borders' => [
                     'bottom' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                    ],
-                ],
-            ]);
-            
-            // Perbaikan khusus untuk kolom B di baris ke-9 (nomor urut)
-            $sheet->getStyle("B{$ninthRow}")->applyFromArray([
-                'borders' => [
-                    'left' => [
                         'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
                         'color' => ['rgb' => '000000'],
                     ],
                     'right' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
                         'color' => ['rgb' => '000000'],
-                    ],
-                    'top' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'bottom' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
                     ],
                 ],
             ]);
-            
-            // Perbaikan khusus untuk kolom C dan D di baris ke-9
-            $sheet->getStyle("C{$ninthRow}:D{$ninthRow}")->applyFromArray([
-                'borders' => [
-                    'left' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'right' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'top' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'bottom' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                    ],
-                ],
-            ]);
-            
-            // Perbaikan khusus untuk kolom E-F (nama barang) di baris ke-9
-            $sheet->getStyle("E{$ninthRow}:F{$ninthRow}")->applyFromArray([
-                'borders' => [
-                    'left' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'right' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'top' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'bottom' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                    ],
-                ],
-                'alignment' => [
-                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
-                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                ],
-            ]);
-            
-            // Hapus border kiri, atas, dan bawah di baris ke-9 untuk kolom keterangan
-            $sheet->getStyle("G{$ninthRow}:K{$ninthRow}")->applyFromArray([
-                'borders' => [
-                    'left' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                    ],
-                    'top' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                    ],
-                    'bottom' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                    ],
-                ],
-            ]);
-            
-            // Untuk baris tambahan setelah baris ke-9
+        } else {
+            // Styling khusus untuk baris ke-10 dan seterusnya (untuk item > 9)
             for ($row = $ninthRow + 1; $row <= $endRow; $row++) {
-                // Perbaikan khusus untuk kolom B (nomor urut) di baris tambahan
+                // Border untuk kolom B (nomor urut)
                 $sheet->getStyle("B{$row}")->applyFromArray([
                     'borders' => [
                         'left' => [
@@ -363,22 +389,10 @@ class NotaGabungan2Export
                     ],
                 ]);
                 
-                // Perbaikan khusus untuk kolom C dan D di baris tambahan
+                // Border untuk kolom C dan D
                 $sheet->getStyle("C{$row}:D{$row}")->applyFromArray([
                     'borders' => [
-                        'left' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                        'right' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                        'top' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                        'bottom' => [
+                        'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
                             'color' => ['rgb' => '000000'],
                         ],
@@ -389,22 +403,10 @@ class NotaGabungan2Export
                     ],
                 ]);
                 
-                // Perbaikan khusus untuk kolom E-F (nama barang) di baris tambahan
+                // Border untuk kolom E-F (nama barang)
                 $sheet->getStyle("E{$row}:F{$row}")->applyFromArray([
                     'borders' => [
-                        'left' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                        'right' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                        'top' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                        'bottom' => [
+                        'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
                             'color' => ['rgb' => '000000'],
                         ],
@@ -415,12 +417,16 @@ class NotaGabungan2Export
                     ],
                 ]);
                 
-                // Merge kolom keterangan (G sampai K) untuk baris tambahan
+                // Merge dan style kolom keterangan (G-K) - TIDAK ADA BORDER BAWAH
                 $sheet->mergeCells("G{$row}:K{$row}");
-                
-                // Apply style untuk kolom keterangan - HAPUS SEMUA BORDER KECUALI BORDER KANAN
-                $additionalKeteranganStyle = [
+                $sheet->getStyle("G{$row}:K{$row}")->applyFromArray([
                     'borders' => [
+                        'top' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
+                        'bottom' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
                         'left' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
                         ],
@@ -428,35 +434,41 @@ class NotaGabungan2Export
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
                             'color' => ['rgb' => '000000'],
                         ],
-                        'top' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                        ],
-                        'bottom' => ($row == $endRow) ? [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                            'color' => ['rgb' => '000000'],
-                        ] : [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
-                        ],
                     ],
-                    'alignment' => [
-                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                    ],
-                ];
-                
-                // Apply style ke range yang di-merge (G sampai K)
-                $sheet->getStyle("G{$row}:K{$row}")->applyFromArray($additionalKeteranganStyle);
+                ]);
             }
+            
+            // Untuk item yang melebihi 9, apply border bold di baris terakhir untuk kolom B-F dan G-K
+            $sheet->getStyle("B{$endRow}:F{$endRow}")->applyFromArray([
+                'borders' => [
+                    'bottom' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                        'color' => ['rgb' => '000000'],
+                    ],
+                ],
+            ]);
+            
+            // Tambahkan border bawah tebal untuk kolom keterangan (G-K) di baris terakhir
+            $sheet->getStyle("G{$endRow}:K{$endRow}")->applyFromArray([
+                'borders' => [
+                    'bottom' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                        'color' => ['rgb' => '000000'],
+                    ],
+                    'right' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                        'color' => ['rgb' => '000000'],
+                    ],
+                ],
+            ]);
         }
-
-        // PENTING: Apply border bold di baris terakhir SETELAH semua styling lainnya
-        $sheet->getStyle("B{$endRow}:F{$endRow}")->applyFromArray($lastRowBorderStyle);
 
         // Text alignment untuk kolom tertentu
         $sheet->getStyle("B{$startRow}:B{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER); // NO
         $sheet->getStyle("C{$startRow}:C{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER); // Jumlah barang
-        $sheet->getStyle("D{$startRow}:D{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER); // Satuan "brng"
-        $sheet->getStyle("E{$startRow}:F{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT); // Nama barang (E-F merged)
+        $sheet->getStyle("D{$startRow}:D{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER); // Satuan
+        $sheet->getStyle("E{$startRow}:F{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT); // Nama barang
+        $sheet->getStyle("G{$startRow}:K{$endRow}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT); // Keterangan produk
     }
 
     protected function insertRowsForItems($sheet, $totalItems, $startRow, $insertAfterRow)
