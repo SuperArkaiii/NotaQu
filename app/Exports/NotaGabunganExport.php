@@ -61,7 +61,7 @@ class NotaGabunganExport
         $keteranganRow2 = $baseKeteranganRow2 + $itemsAdded;
         
         // Set keterangan (merge kolom A sampai J)
-        $keterangan = $firstNota->keterangan ?? 'Terima kasih atas kepercayaan Anda';
+        $keterangan = $firstNota->keterangan ;
         $sheet->setCellValue("A{$keteranganRow1}", $keterangan);
         $sheet->mergeCells("A{$keteranganRow1}:J{$keteranganRow1}");
         
