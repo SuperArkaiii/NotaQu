@@ -35,4 +35,12 @@ class Product extends Model
     {
         return $this->hasMany(NotaItem::class, 'product_id');
     }
+
+
+    //relasi stock history
+    public function stockHistories()
+    {
+        return $this->hasMany(StockHistory::class);
+    } 
+
 }

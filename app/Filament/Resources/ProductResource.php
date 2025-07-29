@@ -23,7 +23,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-protected static ?string $navigationIcon = 'heroicon-o-cube'; // atau ganti sesuai kebutuhan
+protected static ?string $navigationIcon = 'heroicon-o-shopping-cart'; // atau ganti sesuai kebutuhan
     protected static ?string $navigationLabel = 'Produk';
 
     public static function form(Form $form): Form
@@ -64,6 +64,58 @@ protected static ?string $navigationIcon = 'heroicon-o-cube'; // atau ganti sesu
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                
+                //---
+                Tables\Actions\Action::make('manajemenStok')
+                ->label('Manajemen Stok')
+                ->form([
+                    Forms\Components\Select::make('tipe')
+                    ->options([
+                        'tambah' => 'Tambah Stok',
+                        'kurang' => 'Kurangi Stok',
+                    ])
+                        ->required(),
+                    Forms\Components\TextInput::make('jumlah')
+                        ->numeric()
+                        ->required()
+                        ->label('Jumlah'),
+                    Forms\Components\Textarea::make('keterangan')
+                        ->label('Keterangan')->rows(2),
+                ])
+                ->action(function ($record, array $data) {
+                    $user = auth()->user();
+
+                    if ($data['tipe'] === 'tambah') {
+                        $record->stok += $data['jumlah'];
+                    } else {
+                        if ($record->stok >= $data['jumlah']) {
+                        $record->stok -= $data['jumlah'];
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Stok tidak mencukupi!')
+                            ->danger()
+                            ->send();
+                    return;
+                }
+            }
+                    $record->save();
+
+            // simpan riwayat
+            \App\Models\StockHistory::create([
+                'product_id' => $record->id,
+                'user_id' => $user->id,
+                'jumlah' => $data['jumlah'],
+                'tipe' => $data['tipe'],
+                'keterangan' => $data['keterangan'],
+            ]);
+
+            \Filament\Notifications\Notification::make()
+                ->title('Stok berhasil diperbarui!')
+                ->success()
+                ->send();
+        }),
+    
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
