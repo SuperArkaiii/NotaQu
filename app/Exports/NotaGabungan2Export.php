@@ -55,7 +55,7 @@ class NotaGabungan2Export
         // Blok I sampai K (Tabel 1)
         $sheet->setCellValue("I7", $firstNota->kode_faktur . '/DO/RPN/05'); // Faktur
         $sheet->setCellValue("I8", $tanggalKirim); // Tanggal Kirim
-        $sheet->setCellValue("I9", $firstNota->kode_faktur . '/PO/05'); // Nomor PO
+        $sheet->setCellValue("I9", $firstNota->nomor_po . '/PO/05'); // Nomor PO
         
         // Blok B sampai E (Tabel 1)
         $sheet->setCellValue("B7", $firstNota->dataPelanggan->nama ?? '-'); // Nama
@@ -69,7 +69,7 @@ class NotaGabungan2Export
         $headerRow2Base = 39 + $additionalRows; // Baris header tabel 2 setelah pergeseran
         $sheet->setCellValue("I{$headerRow2Base}", $firstNota->kode_faktur . '/2025/DO/RPN/05'); // Faktur
         $sheet->setCellValue("I" . ($headerRow2Base + 1), $tanggalKirim); // Tanggal Kirim
-        $sheet->setCellValue("I" . ($headerRow2Base + 2), $firstNota->kode_faktur . '/PO/05'); // Nomor PO
+        $sheet->setCellValue("I" . ($headerRow2Base + 2), $firstNota->nomor_po . '/PO/05'); // Nomor PO
         
         $sheet->setCellValue("B{$headerRow2Base}", $firstNota->dataPelanggan->nama ?? '-'); // Nama
         $sheet->setCellValue("B" . ($headerRow2Base + 1), $alamat); // Alamat

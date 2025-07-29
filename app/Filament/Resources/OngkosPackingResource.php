@@ -22,8 +22,10 @@ class OngkosPackingResource extends Resource
 {
     protected static ?string $model = OngkosPacking::class;
 
-protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationLabel = 'Harga Packing';
+    protected static ?string $label = 'Harga Packing';
+    protected static ?string $pluralLabel = 'Harga Packing';    
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form

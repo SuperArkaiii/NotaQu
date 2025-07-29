@@ -23,6 +23,8 @@ class DataPelangganResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group'; // untuk ikon Heroicon
     protected static ?string $navigationLabel = 'Data Pelanggan';
+    protected static ?string $label = 'Data Pelanggan';
+    protected static ?string $pluralLabel = 'Data Pelanggan';    
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
