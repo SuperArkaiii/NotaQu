@@ -11,7 +11,7 @@ class Product extends Model
 
     // Bisa pilih salah satu, fillable atau guarded.
     protected $fillable = [
-        'nama',
+        'nama_produk',
         'stok',
         'harga',
         'status',
