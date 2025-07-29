@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class SalesByCategoryTable extends BaseWidget
 {
     protected int|string|array $columnSpan = 'full';
+    protected static ?string $heading = 'Penjualan Berdasarkan Kategori';
 
     public function table(Tables\Table $table): Tables\Table
     {
