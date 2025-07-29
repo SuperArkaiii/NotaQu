@@ -14,9 +14,7 @@ class CostReport extends ChartWidget
     {
         return [
             'this_month' => 'Bulan Ini',
-            'last_month' => 'Bulan Lalu',
             'this_year'  => 'Tahun Ini',
-            'last_year'  => 'Tahun Lalu',
         ];
     }
 

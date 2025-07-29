@@ -40,6 +40,13 @@ protected static ?string $navigationIcon = 'heroicon-o-shopping-cart'; // atau g
             TextInput::make('harga')
                 ->numeric()
                 ->required(),
+
+            Forms\Components\Select::make('category_id')
+                ->label('Kategori Produk')
+                ->relationship('category', 'name')
+                ->required()
+                ->searchable(),
+                
             ]);
     }
 
@@ -48,6 +55,11 @@ protected static ?string $navigationIcon = 'heroicon-o-shopping-cart'; // atau g
         return $table
             ->columns([
             TextColumn::make('nama_produk')->label('Nama Produk')->searchable(),
+            Tables\Columns\TextColumn::make('category.name')
+                ->label('Kategori')
+                ->sortable()
+                ->searchable(),
+
             TextColumn::make('stok')->label('Stok')->sortable(),
             TextColumn::make('harga')->label('Harga')->money('idr')->sortable(),
 
@@ -81,6 +93,7 @@ protected static ?string $navigationIcon = 'heroicon-o-shopping-cart'; // atau g
                         ->label('Jumlah'),
                     Forms\Components\Textarea::make('keterangan')
                         ->label('Keterangan')->rows(2),
+                        
                 ])
                 ->action(function ($record, array $data) {
                     $user = auth()->user();

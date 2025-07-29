@@ -16,7 +16,6 @@ class SalesReport extends ChartWidget
         return [
             'this_month' => 'Bulan Ini',
             'this_year'  => 'Tahun Ini',
-            'last_year'  => 'Tahun Lalu',
         ];
     }
 

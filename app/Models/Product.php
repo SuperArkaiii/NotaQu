@@ -15,6 +15,7 @@ class Product extends Model
         'stok',
         'harga',
         'status',
+        'category_id',
         // tambah field lain sesuai kolom di tabel products
     ];
 
@@ -42,5 +43,12 @@ class Product extends Model
     {
         return $this->hasMany(StockHistory::class);
     } 
+
+    // relasi ke kategori
+    public function category()
+    {
+    return $this->belongsTo(Category::class);
+    }
+
 
 }
