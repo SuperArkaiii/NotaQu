@@ -24,6 +24,7 @@ class OngkosPackingResource extends Resource
 
 protected static ?string $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationLabel = 'Harga Packing';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {

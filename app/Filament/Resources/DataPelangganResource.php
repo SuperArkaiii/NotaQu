@@ -22,6 +22,8 @@ class DataPelangganResource extends Resource
     protected static ?string $model = DataPelanggan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group'; // untuk ikon Heroicon
+    protected static ?string $navigationLabel = 'Data Pelanggan';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

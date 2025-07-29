@@ -21,6 +21,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Widgets\SalesReport;
 use App\Filament\Widgets\CostReport;
 use App\Filament\Widgets\CustomWelcomeWidget;
+use App\Filament\Widgets\SalesByCategoryTable;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -36,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
                 CustomWelcomeWidget::class,
                 SalesReport::class,
                 CostReport::class,
+                SalesByCategoryTable::class,
             ])
             ->colors([
                 'primary' => Color::Amber,

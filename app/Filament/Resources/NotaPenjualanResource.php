@@ -23,6 +23,7 @@ class NotaPenjualanResource extends Resource
     protected static ?string $model = NotaPenjualan::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Invoice & Surat Jalan';
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
