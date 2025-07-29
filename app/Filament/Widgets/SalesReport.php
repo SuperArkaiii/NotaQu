@@ -10,7 +10,6 @@ class SalesReport extends ChartWidget
 {
     protected static ?string $heading = 'Ringkasan Penjualan';
 
-    
     protected function getFilters(): ?array
     {
         return [
@@ -22,20 +21,31 @@ class SalesReport extends ChartWidget
     protected function getData(): array
     {
         $query = DB::table('nota_penjualans');
+        $label = ''; // Label dinamis
 
-        //filter
+        // Filter
         switch ($this->filter) {
             case 'this_month':
                 $query->whereMonth('tanggal', Carbon::now()->month)
                       ->whereYear('tanggal', Carbon::now()->year);
+                $label = Carbon::now()->locale('id')->translatedFormat('F Y'); 
+                // Contoh: Juli 2025
                 break;
 
             case 'this_year':
                 $query->whereYear('tanggal', Carbon::now()->year);
+                $label = Carbon::now()->year; 
+                // Contoh: 2025
                 break;
 
             case 'last_year':
                 $query->whereYear('tanggal', Carbon::now()->subYear()->year);
+                $label = Carbon::now()->subYear()->year; 
+                // Contoh: 2024
+                break;
+
+            default:
+                $label = 'Data';
                 break;
         }
 
@@ -55,7 +65,7 @@ class SalesReport extends ChartWidget
                     'backgroundColor' => '#10b981',
                 ],
             ],
-            'labels' => ['Penjualan'],
+            'labels' => [$label], // label dinamis
         ];
     }
 

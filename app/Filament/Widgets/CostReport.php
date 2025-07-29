@@ -21,24 +21,30 @@ class CostReport extends ChartWidget
     protected function getData(): array
     {
         $query = DB::table('nota_penjualans');
+        $label = ''; // label dinamis
 
         switch ($this->filter) {
             case 'this_month':
                 $query->whereMonth('tanggal', Carbon::now()->month)
                       ->whereYear('tanggal', Carbon::now()->year);
-                break;
-
-            case 'last_month':
-                $query->whereMonth('tanggal', Carbon::now()->subMonth()->month)
-                      ->whereYear('tanggal', Carbon::now()->subMonth()->year);
+                $label = Carbon::now()->locale('id')->translatedFormat('F Y'); 
+                // Contoh: Juli 2025
                 break;
 
             case 'this_year':
                 $query->whereYear('tanggal', Carbon::now()->year);
+                $label = Carbon::now()->year; 
+                // Contoh: 2025
                 break;
 
             case 'last_year':
                 $query->whereYear('tanggal', Carbon::now()->subYear()->year);
+                $label = Carbon::now()->subYear()->year; 
+                // Contoh: 2024
+                break;
+
+            default:
+                $label = 'Data';
                 break;
         }
 
@@ -58,7 +64,7 @@ class CostReport extends ChartWidget
                     'backgroundColor' => '#ef4444',
                 ],
             ],
-            'labels' => ['Biaya'],
+            'labels' => [$label], // label sesuai filter
         ];
     }
 
