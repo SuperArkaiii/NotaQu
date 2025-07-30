@@ -34,22 +34,28 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-            TextInput::make('nama_produk')
-                ->required(),
+                TextInput::make('nama_produk')
+                    ->required(),
 
-            TextInput::make('stok')
+                TextInput::make('stok')
+                    ->numeric()
+                    ->required(),
+
+                TextInput::make('harga')
+                    ->numeric()
+                    ->required(),
+
+                Forms\Components\Select::make('category_id')
+                    ->label('Kategori Produk')
+                    ->relationship('category', 'name')
+                    ->required()
+                    ->searchable(),
+
+                Forms\Components\TextInput::make('permintaan_stok')
+                ->label('Permintaan Stok')
                 ->numeric()
-                ->required(),
-
-            TextInput::make('harga')
-                ->numeric()
-                ->required(),
-
-            Forms\Components\Select::make('category_id')
-                ->label('Kategori Produk')
-                ->relationship('category', 'name')
-                ->required()
-                ->searchable(),
+                ->default(0),
+                    
                 
             ]);
     }
@@ -65,6 +71,12 @@ class ProductResource extends Resource
                 ->searchable(),
 
             TextColumn::make('stok')->label('Stok')->sortable(),
+            
+            Tables\Columns\TextColumn::make('permintaan_stok')
+                ->label('Permintaan Stok')
+                ->color(fn ($record) => $record->permintaan_stok > $record->stok ? 'danger' : 'success'),
+
+
             TextColumn::make('harga')->label('Harga')->money('idr')->sortable(),
 
             BadgeColumn::make('status')
@@ -72,7 +84,8 @@ class ProductResource extends Resource
                     'success' => 'Tersedia',
                     'danger' => 'Habis',
                 ])
-                ->sortable(),
+                ->sortable(),        
+
             ])
             ->filters([
                 //

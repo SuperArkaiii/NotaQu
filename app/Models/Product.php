@@ -16,6 +16,7 @@ class Product extends Model
         'harga',
         'status',
         'category_id',
+        'permintaan_stok',
         // tambah field lain sesuai kolom di tabel products
     ];
 

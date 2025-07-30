@@ -72,4 +72,8 @@ class StockHistoryResource extends Resource
             'edit' => Pages\EditStockHistory::route('/{record}/edit'),
         ];
     }
+
+
+    
+
 }
