@@ -37,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
                 CustomWelcomeWidget::class,
                 SalesReport::class,
                 CostReport::class,
+                \App\Filament\Widgets\SalesTrendReport::class,
                 SalesByCategoryTable::class,
             ])
             ->colors([
