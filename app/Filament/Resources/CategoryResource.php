@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Database\Eloquent\Model;
 
 class CategoryResource extends Resource
 {
@@ -66,4 +67,25 @@ class CategoryResource extends Resource
             'edit' => Pages\EditCategory::route('/{record}/edit'),
         ];
     }
+
+    public static function canViewAny(): bool
+    {
+    return auth()->user()->can('view_any_category');
+    }
+
+    public static function canCreate(): bool
+    {
+    return auth()->user()->can('create_category');
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+    return auth()->user()->can('update_category');
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+    return auth()->user()->can('delete_category');
+    }
+
 }

@@ -101,7 +101,7 @@ class ProductResource extends Resource
                     Forms\Components\Select::make('tipe')
                     ->options([
                         'tambah' => 'Tambah Stok',
-                        'kurang' => 'Kurangi Stok',
+                        //'kurang' => 'Kurangi Stok', (belum dipakai)
                     ])
                         ->required(),
                     Forms\Components\TextInput::make('jumlah')
